@@ -1,0 +1,36 @@
+# Configuração das variáveis globais
+@baseUrl = http://localhost:8000/api
+
+### 1. Registrar um novo usuário
+POST {{baseUrl}}/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Usuário de Teste",
+  "email": "teste@chatbot.com",
+  "password": "senha123",
+  "password_confirmation": "senha123"
+}
+
+### 2. Fazer Login
+# @name loginRequest
+POST {{baseUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "teste@chatbot.com",
+  "password": "senha123"
+}
+
+### 3. Acessar Rota Protegida (Buscar dados do Usuário)
+# Essa requisição pega o token automaticamente da requisição de login acima!
+GET {{baseUrl}}/user
+Authorization: Bearer {{loginRequest.response.body.access_token}}
+Accept: application/json
+
+### 4. Fazer Logout
+POST {{baseUrl}}/logout
+Authorization: Bearer {{loginRequest.response.body.access_token}}
+Accept: application/json

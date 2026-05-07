@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testador de API - Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        chatbg: '#343541',
+                        chatbox: '#40414f',
+                        chatbtn: '#19c37d'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-chatbg text-gray-100 min-h-screen flex flex-col items-center py-10 font-sans">
+
+    <div class="w-full max-w-4xl flex gap-6 px-4">
+        
+        <div class="w-1/2 space-y-6">
+            
+            <div id="auth-panel" class="bg-chatbox p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Acesso ao Chatbot</h2>
+                
+                <div class="space-y-3">
+                    <input type="text" id="name" placeholder="Nome (Só para Registro)" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                    <input type="email" id="email" placeholder="E-mail" value="teste@chatbot.com" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                    <input type="password" id="password" placeholder="Senha" value="senha123" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                </div>
+
+                <div class="mt-4 flex gap-2">
+                    <button onclick="login()" class="flex-1 bg-chatbtn hover:bg-green-600 text-white font-semibold py-2 rounded transition">Entrar</button>
+                    <button onclick="register()" class="flex-1 border border-chatbtn text-chatbtn hover:bg-chatbtn hover:text-white font-semibold py-2 rounded transition">Registrar</button>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button onclick="switchPanel('forgot-panel')" class="text-sm text-gray-400 hover:text-chatbtn underline">Esqueci minha senha</button>
+                </div>
+            </div>
+
+            <div id="forgot-panel" class="bg-chatbox p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-xl font-bold mb-2">Recuperar Senha</h2>
+                <p class="text-sm text-gray-300 mb-4">Digite seu e-mail para receber o link.</p>
+                
+                <div class="space-y-3">
+                    <input type="email" id="forgot-email" placeholder="E-mail" value="teste@chatbot.com" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                </div>
+
+                <div class="mt-4 flex flex-col gap-2">
+                    <button onclick="sendResetLink()" class="w-full bg-chatbtn hover:bg-green-600 text-white font-semibold py-2 rounded transition">Enviar Link de Recuperação</button>
+                    <button onclick="switchPanel('reset-panel')" class="w-full border border-gray-500 text-gray-300 hover:bg-gray-600 font-semibold py-2 rounded transition">Já tenho o token</button>
+                    <button onclick="switchPanel('auth-panel')" class="w-full text-sm text-gray-400 hover:text-white mt-2">Voltar para Login</button>
+                </div>
+            </div>
+
+            <div id="reset-panel" class="bg-chatbox p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-xl font-bold mb-2">Criar Nova Senha</h2>
+                <p class="text-sm text-gray-300 mb-4">Cole o token recebido ou acesse pelo link do e-mail.</p>
+                
+                <div class="space-y-3">
+                    <input type="text" id="reset-token" placeholder="Cole o token gigante aqui" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                    <input type="email" id="reset-email" placeholder="Seu E-mail" value="teste@chatbot.com" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                    <input type="password" id="reset-password" placeholder="Nova Senha" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                    <input type="password" id="reset-password-confirm" placeholder="Confirme a Nova Senha" class="w-full bg-chatbg border border-gray-600 rounded p-2 focus:outline-none focus:border-chatbtn">
+                </div>
+
+                <div class="mt-4 flex flex-col gap-2">
+                    <button onclick="resetPassword()" class="w-full bg-chatbtn hover:bg-green-600 text-white font-semibold py-2 rounded transition">Salvar Nova Senha</button>
+                    <button onclick="switchPanel('auth-panel')" class="w-full text-sm text-gray-400 hover:text-white mt-2">Voltar para Login</button>
+                </div>
+            </div>
+
+            <div id="logged-panel" class="bg-chatbox p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-xl font-bold mb-2">Área Restrita</h2>
+                <p class="text-sm text-gray-300 mb-4">Você está autenticado com o token Bearer.</p>
+                
+                <div class="space-y-3">
+                    <button onclick="getUser()" class="w-full border border-gray-400 hover:bg-gray-600 text-white font-semibold py-2 rounded transition">Buscar Meus Dados</button>
+                    <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded transition">Sair (Logout)</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="w-1/2 bg-black rounded-lg shadow-lg flex flex-col">
+            <div class="bg-gray-800 px-4 py-2 rounded-t-lg flex justify-between items-center border-b border-gray-700">
+                <span class="text-sm font-mono text-gray-400">Resposta da API (JSON)</span>
+                <button onclick="clearLog()" class="text-xs text-gray-500 hover:text-white">Limpar</button>
+            </div>
+            <pre id="api-log" class="p-4 font-mono text-xs text-green-400 overflow-y-auto h-[600px] whitespace-pre-wrap break-all">Aguardando ações...</pre>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        
+        window.onload = () => {
+            // Verifica se está logado
+            if (localStorage.getItem('token')) {
+                switchPanel('logged-panel');
+            } else {
+                switchPanel('auth-panel');
+            }
+
+            // Captura token e email da URL (Query String)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const email = urlParams.get('email');
+
+            if (token) {
+                switchPanel('reset-panel');
+                document.getElementById('reset-token').value = token;
+                if (email) document.getElementById('reset-email').value = email;
+                
+                // Limpa a URL visualmente para ficar mais limpa
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        };
+
+        function switchPanel(panelId) {
+            ['auth-panel', 'forgot-panel', 'reset-panel', 'logged-panel'].forEach(id => {
+                document.getElementById(id).style.display = id === panelId ? 'block' : 'none';
+            });
+        }
+
+        function logResponse(method, endpoint, status, data) {
+            const logEl = document.getElementById('api-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `\n[${timestamp}] ${method} ${endpoint} - Status: ${status}\n${JSON.stringify(data, null, 2)}\n`;
+            logEl.innerText = logEntry + logEl.innerText;
+        }
+
+        function clearLog() { document.getElementById('api-log').innerText = 'Aguardando ações...'; }
+
+        async function fetchAPI(endpoint, method, body = null, useAuth = false) {
+            const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+            if (useAuth) headers['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method, headers, body: body ? JSON.stringify(body) : null
+                });
+                const data = await response.json();
+                logResponse(method, endpoint, response.status, data);
+                return { status: response.status, data };
+            } catch (error) {
+                logResponse(method, endpoint, 'Erro', error.message);
+                return { status: 500, data: null };
+            }
+        }
+
+        // --- Funções de Autenticação Básica ---
+        async function register() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            await fetchAPI('/register', 'POST', { name, email, password, password_confirmation: password });
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { status, data } = await fetchAPI('/login', 'POST', { email, password });
+            
+            if (status === 200 && data.access_token) {
+                localStorage.setItem('token', data.access_token);
+                switchPanel('logged-panel');
+            }
+        }
+
+        async function getUser() {
+            const { status } = await fetchAPI('/user', 'GET', null, true);
+            if (status === 401) logout();
+        }
+
+        async function logout() {
+            if (localStorage.getItem('token')) await fetchAPI('/logout', 'POST', null, true);
+            localStorage.removeItem('token');
+            switchPanel('auth-panel');
+        }
+
+        // --- Funções de Recuperação de Senha ---
+        async function sendResetLink() {
+            const email = document.getElementById('forgot-email').value;
+            await fetchAPI('/forgot-password', 'POST', { email });
+            alert("Requisição enviada! Verifique a sua caixa de entrada.");
+        }
+
+        async function resetPassword() {
+            const token = document.getElementById('reset-token').value;
+            const email = document.getElementById('reset-email').value;
+            const password = document.getElementById('reset-password').value;
+            const password_confirmation = document.getElementById('reset-password-confirm').value;
+
+            const { status } = await fetchAPI('/reset-password', 'POST', { 
+                token, email, password, password_confirmation 
+            });
+
+            if (status === 200) {
+                alert("Senha redefinida com sucesso! Você já pode fazer o login com a nova senha.");
+                switchPanel('auth-panel');
+            }
+        }
+    </script>
+</body>
+</html>
