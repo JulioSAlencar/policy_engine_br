@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Serviço do PHP (Nossa aplicação)
   app:
     build:
       context: .
@@ -15,7 +14,6 @@ services:
     networks:
       - laravel-network
 
-  # Serviço do NGINX (Servidor Web)
   webserver:
     image: nginx:alpine
     container_name: webserver
@@ -30,7 +28,6 @@ services:
     depends_on:
       - app
 
-  # Serviço do MySQL (Banco de Dados)
   db:
     image: mysql:8.0
     container_name: db
@@ -44,6 +41,17 @@ services:
       - dbdata:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - laravel-network
+
+  # NOVO SERVIÇO DE E-MAIL (MAILPIT)
+  mailpit:
+    image: 'axllent/mailpit:latest'
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # Porta por onde o Laravel manda o e-mail
+      - "8025:8025" # Porta para você acessar a interface visual no navegador
     networks:
       - laravel-network
 
