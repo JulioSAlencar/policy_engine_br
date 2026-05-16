@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec *)",
+      "Bash(command -v magick convert inkscape rsvg-convert)",
+      "Bash(node -e \"try{require.resolve\\('sharp'\\);console.log\\('sharp-ok'\\)}catch\\(e\\){console.log\\('no-sharp'\\)}\")",
+      "Bash(python -c \"import cairosvg; print\\('cairosvg-ok'\\)\")",
+      "Bash(php -v)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan test)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan route:list --columns=method,uri,name,middleware)",
+      "Bash(docker compose *)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan route:list)",
+      "Bash(echo \"exit:$?\")"
+    ]
+  }
+}

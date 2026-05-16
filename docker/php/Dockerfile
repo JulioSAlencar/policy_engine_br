@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libzip-dev \
     zip \
     unzip
 
@@ -14,7 +15,10 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Instala extensões do PHP necessárias para o Laravel
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+
+# Instala a extensão phpredis via PECL
+RUN pecl install redis && docker-php-ext-enable redis
 
 # Instala o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

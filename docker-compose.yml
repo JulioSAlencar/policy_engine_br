@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -13,6 +11,9 @@ services:
       - ./src:/var/www
     networks:
       - laravel-network
+    depends_on:
+      - db
+      - redis
 
   webserver:
     image: nginx:alpine
@@ -44,14 +45,55 @@ services:
     networks:
       - laravel-network
 
-  # NOVO SERVIÇO DE E-MAIL (MAILPIT)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    ports:
+      # Exposto apenas no localhost por segurança
+      - "127.0.0.1:8080:80"
+    networks:
+      - laravel-network
+    depends_on:
+      - db
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - laravel-network
+
+  queue_worker:
+    image: laravel-app
+    container_name: queue_worker
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    command: php artisan queue:work redis --queue=gemini,default --sleep=3 --tries=3 --max-time=3600
+    networks:
+      - laravel-network
+    depends_on:
+      - app
+      - redis
+      - db
+
   mailpit:
     image: 'axllent/mailpit:latest'
     container_name: mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025" # Porta por onde o Laravel manda o e-mail
-      - "8025:8025" # Porta para você acessar a interface visual no navegador
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - laravel-network
 
@@ -61,3 +103,4 @@ networks:
 
 volumes:
   dbdata:
+  redisdata:

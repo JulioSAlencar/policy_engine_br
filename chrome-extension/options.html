@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — GovCert</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); width: 100%; max-width: 520px; padding: 32px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .logo svg { width: 34px; height: 34px; }
+    .logo span { font-size: 22px; font-weight: 700; color: #1351B4; }
+    .logo span b { color: #0C326F; font-weight: 700; }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    input[type="text"], input[type="url"], input[type="password"] {
+      width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px;
+      font-size: 13px; color: #111; outline: none; transition: border-color .15s;
+    }
+    input:focus { border-color: #1351B4; box-shadow: 0 0 0 3px rgba(19,81,180,.15); }
+    .field { margin-bottom: 20px; }
+    .hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    button { width: 100%; padding: 11px; background: #1351B4; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    button:hover { background: #0C326F; }
+    .status { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+    .status.success { background: #dcfce7; color: #166534; display: block; }
+    .status.error   { background: #fee2e2; color: #991b1b; display: block; }
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 24px 0; }
+    .toggle-token { font-size: 11px; color: #1351B4; cursor: pointer; float: right; margin-top: -22px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M28 4 L50 12 V27 C50 41 40 49 28 53 C16 49 6 41 6 27 V12 Z" fill="#1351B4"/>
+        <path d="M28 4 L50 12 V18 L28 10 L6 18 V12 Z" fill="#FFCD07"/>
+        <path d="M18 28 l7 7 l13 -15" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Gov<b>Cert</b></span>
+    </div>
+    <div class="subtitle">Auditoria de IA e Governança Pública — Configurações da Extensão</div>
+
+    <div class="field">
+      <label for="apiUrl">URL da API</label>
+      <input type="url" id="apiUrl" placeholder="http://localhost:8000">
+      <div class="hint">Endereço do servidor Laravel. Padrão: http://localhost:8000</div>
+    </div>
+
+    <div class="field">
+      <label for="apiToken">
+        API Token (Sanctum)
+        <span class="toggle-token" id="toggle-token">mostrar</span>
+      </label>
+      <input type="password" id="apiToken" placeholder="Cole aqui o token gerado no sistema">
+      <div class="hint">Gere um token em: <em>Perfil → API Tokens</em> no sistema web.</div>
+    </div>
+
+    <div class="field">
+      <label for="userIdentifier">Identificador do Usuário</label>
+      <input type="text" id="userIdentifier" placeholder="ex: joao.silva ou matricula-12345">
+      <div class="hint">Usado para identificar quem gerou os logs na auditoria.</div>
+    </div>
+
+    <button id="save-btn">Salvar Configurações</button>
+    <div class="status" id="status-msg"></div>
+
+    <hr>
+    <p style="font-size:11px; color:#9ca3af; text-align:center;">
+      A extensão monitora apenas as plataformas de IA configuradas no manifesto.<br>
+      Nenhum dado é enviado sem um token válido configurado.
+    </p>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
