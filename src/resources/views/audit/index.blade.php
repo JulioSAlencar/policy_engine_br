@@ -81,7 +81,7 @@
                         <th class="px-4 py-3">Risco</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3">Capturado em</th>
-                        <th class="px-4 py-3">Tipo</th>
+                        <th class="px-4 py-3">Justificativa</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -135,22 +135,10 @@
                         <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
                             {{ $log->captured_at?->format('d/m/Y H:i') }}
                         </td>
-                        <td class="px-4 py-3">
-                            @php
-                                $leakColors = [
-                                    'Dados Pessoais' => 'bg-orange-100 text-orange-800',
-                                    'Credenciais'    => 'bg-red-100 text-red-800',
-                                    'Código Fonte'   => 'bg-purple-100 text-purple-800',
-                                    'Nenhum'         => 'bg-gray-100 text-gray-600',
-                                ];
-                            @endphp
-                            @if($log->leak_type)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $leakColors[$log->leak_type] ?? 'bg-gray-100 text-gray-700' }}">
-                                    {{ $log->leak_type }}
-                                </span>
-                            @else
-                                <span class="text-gray-400">—</span>
-                            @endif
+                        <td class="px-4 py-3 text-gray-600">
+                            <span class="block max-w-xs truncate text-xs" title="{{ $log->gemini_justification }}">
+                                {{ \Illuminate\Support\Str::limit($log->gemini_justification, 80) ?: '—' }}
+                            </span>
                         </td>
                     </tr>
                     @empty
@@ -172,52 +160,48 @@
 
 </div>
 
-<!-- Modal único — Simulação de Chat -->
-<div id="chat-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-close></div>
-
-    <div class="relative bg-gray-50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-        <!-- Cabeçalho -->
-        <div class="flex items-center justify-between px-5 py-4 bg-indigo-800 text-white">
-            <div>
-                <h3 class="font-semibold">Interação Auditada <span id="m-id" class="text-indigo-300 text-sm font-mono"></span></h3>
-                <p class="text-xs text-indigo-200" id="m-user"></p>
-            </div>
-            <button id="chat-close" type="button"
-                class="text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-lg w-8 h-8 flex items-center justify-center text-xl leading-none"
-                aria-label="Fechar">&times;</button>
+{{-- Modal único — Simulação de Chat (componente <x-modal>; IDs preservados p/ o JS) --}}
+<x-modal id="chat-modal" max-width="max-w-2xl" panel-class="bg-gray-50">
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between px-5 py-4 bg-indigo-800 text-white">
+        <div>
+            <h3 class="font-semibold">Interação Auditada <span id="m-id" class="text-indigo-300 text-sm font-mono"></span></h3>
+            <p class="text-xs text-indigo-200" id="m-user"></p>
         </div>
+        <button id="chat-close" type="button"
+            class="text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-lg w-8 h-8 flex items-center justify-center text-xl leading-none transition-all duration-300 ease-in-out"
+            aria-label="Fechar">&times;</button>
+    </div>
 
-        <!-- Corpo: simulação de chat -->
-        <div class="flex-1 overflow-y-auto p-5 space-y-4">
+    <!-- Corpo: simulação de chat -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
 
-            <!-- Balão do usuário (direita) -->
-            <div class="flex justify-end">
-                <div class="max-w-[80%] bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3">
-                    <p class="text-[10px] uppercase tracking-wide text-indigo-200 mb-1">Usuário</p>
-                    <p id="m-input" class="text-sm whitespace-pre-wrap break-words"></p>
-                </div>
-            </div>
-
-            <!-- Balão do agente de IA (esquerda) -->
-            <div class="flex justify-start">
-                <div class="max-w-[80%] bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-                    <p id="m-agent" class="text-xs font-semibold text-indigo-700 mb-1"></p>
-                    <p id="m-output" class="text-sm whitespace-pre-wrap break-words"></p>
-                </div>
+        <!-- Balão do usuário (direita) -->
+        <div class="flex justify-end">
+            <div class="max-w-[80%] bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3">
+                <p class="text-[10px] uppercase tracking-wide text-indigo-200 mb-1">Usuário</p>
+                <p id="m-input" class="text-sm whitespace-pre-wrap break-words"></p>
             </div>
         </div>
 
-        <!-- Parecer da Auditoria -->
-        <div class="border-t border-gray-200 bg-amber-50 px-5 py-4">
-            <div class="flex items-center gap-2 mb-1">
-                <span class="text-amber-600 font-semibold text-sm">Parecer da Auditoria</span>
-                <span id="m-leak" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"></span>
+        <!-- Balão do agente de IA (esquerda) -->
+        <div class="flex justify-start">
+            <div class="max-w-[80%] bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                <p id="m-agent" class="text-xs font-semibold text-indigo-700 mb-1"></p>
+                <p id="m-output" class="text-sm whitespace-pre-wrap break-words"></p>
             </div>
-            <p id="m-justification" class="text-sm text-gray-700 whitespace-pre-wrap break-words"></p>
         </div>
     </div>
-</div>
+
+    <!-- Parecer da Auditoria -->
+    <div class="border-t border-gray-200 bg-amber-50 px-5 py-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="text-amber-600 font-semibold text-sm">Parecer da Auditoria</span>
+            <span id="m-leak" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"></span>
+        </div>
+        <p id="m-justification" class="text-sm text-gray-700 whitespace-pre-wrap break-words"></p>
+    </div>
+</x-modal>
 
 <!-- Form oculto para PDF -->
 <form id="form-pdf" method="POST" action="{{ route('audit.export.pdf', request()->query()) }}" style="display:none">

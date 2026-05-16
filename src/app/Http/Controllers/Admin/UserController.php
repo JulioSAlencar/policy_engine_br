@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
@@ -23,13 +24,10 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    public function edit(User $user): View
+    public function update(Request $request, User $user): RedirectResponse|JsonResponse
     {
-        return view('admin.users.edit', compact('user'));
-    }
-
-    public function update(Request $request, User $user): RedirectResponse
-    {
+        // Requisições JSON (AJAX) recebem 422 com os erros automaticamente;
+        // requisições tradicionais recebem o redirect com erros na sessão.
         $validated = $request->validate([
             'name'  => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -46,6 +44,18 @@ class UserController extends Controller
             $user,
             ['de' => $original, 'para' => $validated]
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => "Usuário {$user->name} atualizado com sucesso.",
+                'user'    => [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    'role'  => $user->role,
+                ],
+            ]);
+        }
 
         return redirect()
             ->route('admin.users.index')

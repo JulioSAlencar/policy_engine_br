@@ -82,5 +82,15 @@
         </form>
     </div>
 
+    <!-- Acesso da Extensão (API Token) -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-1">Acesso da Extensão (API Token)</h2>
+        <p class="text-gray-500 text-sm mb-4">
+            Gere ou revogue o token usado pela extensão do Chrome — direto pelo painel,
+            sem precisar de terminal.
+        </p>
+        <x-button :href="route('profile.tokens')" variant="primary">Gerenciar Token da Extensão</x-button>
+    </div>
+
 </div>
 @endsection

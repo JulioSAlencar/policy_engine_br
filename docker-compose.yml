@@ -34,9 +34,9 @@ services:
     container_name: db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: laravel
+      MYSQL_DATABASE: govcert_dev
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: laravel
+      MYSQL_USER: govcert_user
       MYSQL_PASSWORD: root
     volumes:
       - dbdata:/var/lib/mysql
@@ -49,6 +49,7 @@ services:
     image: phpmyadmin/phpmyadmin:latest
     container_name: phpmyadmin
     restart: unless-stopped
+    profiles: ["dev"]
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
@@ -79,7 +80,22 @@ services:
     working_dir: /var/www
     volumes:
       - ./src:/var/www
-    command: php artisan queue:work redis --queue=gemini,default --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work redis --queue=gemini,default --sleep=3 --tries=3 --max-time=3600 --max-jobs=500
+    networks:
+      - laravel-network
+    depends_on:
+      - app
+      - redis
+      - db
+
+  scheduler:
+    image: laravel-app
+    container_name: scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    command: php artisan schedule:work
     networks:
       - laravel-network
     depends_on:
@@ -91,6 +107,7 @@ services:
     image: 'axllent/mailpit:latest'
     container_name: mailpit
     restart: unless-stopped
+    profiles: ["dev"]
     ports:
       - "1025:1025"
       - "8025:8025"

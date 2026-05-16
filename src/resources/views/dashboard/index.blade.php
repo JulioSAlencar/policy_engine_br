@@ -11,6 +11,27 @@
         <p class="text-gray-500 text-sm mt-1">Visão geral dos dados capturados e análises de governança</p>
     </div>
 
+    <!-- Filtro de período -->
+    <form method="GET" action="{{ route('dashboard') }}" class="bg-white rounded-xl shadow p-4">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Data de Início</label>
+                <input type="date" name="start_date" value="{{ $startDate }}"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Data de Fim</label>
+                <input type="date" name="end_date" value="{{ $endDate }}"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400">
+            </div>
+            <div class="flex gap-2">
+                <x-button type="submit" variant="primary">Filtrar</x-button>
+                <x-button :href="route('dashboard')" variant="secondary">Últimos 30 dias</x-button>
+            </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">Período exibido: <strong>{{ \Illuminate\Support\Carbon::parse($startDate)->format('d/m/Y') }}</strong> a <strong>{{ \Illuminate\Support\Carbon::parse($endDate)->format('d/m/Y') }}</strong></p>
+    </form>
+
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-indigo-500">
@@ -36,7 +57,7 @@
 
         <!-- Linha: Volume ao longo do tempo -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
-            <h2 class="text-base font-semibold text-gray-700 mb-4">Volume de Dados Capturados (últimos 30 dias)</h2>
+            <h2 class="text-base font-semibold text-gray-700 mb-4">Volume de Dados Capturados ({{ \Illuminate\Support\Carbon::parse($startDate)->format('d/m') }} – {{ \Illuminate\Support\Carbon::parse($endDate)->format('d/m') }})</h2>
             <div id="chart-line"></div>
         </div>
 

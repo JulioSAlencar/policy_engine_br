@@ -65,14 +65,57 @@ class UserManagementTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    public function test_auditor_nao_acessa_edicao_de_usuario(): void
+    public function test_auditor_nao_acessa_gestao_de_usuarios(): void
     {
         $auditor = User::factory()->auditor()->create();
-        $target  = User::factory()->create();
 
         $this->actingAs($auditor)
-            ->get(route('admin.users.edit', $target))
+            ->get(route('admin.users.index'))
             ->assertStatus(403);
+    }
+
+    public function test_admin_atualiza_usuario_via_ajax_recebe_json(): void
+    {
+        $admin  = User::factory()->admin()->create();
+        $target = User::factory()->auditor()->create();
+
+        $response = $this->actingAs($admin)->putJson(route('admin.users.update', $target), [
+            'name'  => 'Via AJAX',
+            'email' => 'ajax@govcert.gov.br',
+            'role'  => 'admin',
+        ]);
+
+        $response->assertOk()
+                 ->assertJson([
+                     'user' => [
+                         'id'    => $target->id,
+                         'name'  => 'Via AJAX',
+                         'email' => 'ajax@govcert.gov.br',
+                         'role'  => 'admin',
+                     ],
+                 ]);
+
+        $this->assertDatabaseHas('users', [
+            'id'   => $target->id,
+            'name' => 'Via AJAX',
+            'role' => 'admin',
+        ]);
+    }
+
+    public function test_update_via_ajax_com_email_duplicado_retorna_422(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $a     = User::factory()->create(['email' => 'ax@govcert.gov.br']);
+        User::factory()->create(['email' => 'bx@govcert.gov.br']);
+
+        $response = $this->actingAs($admin)->putJson(route('admin.users.update', $a), [
+            'name'  => $a->name,
+            'email' => 'bx@govcert.gov.br',
+            'role'  => 'auditor',
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors('email');
     }
 
     public function test_login_web_gera_registro_de_atividade(): void

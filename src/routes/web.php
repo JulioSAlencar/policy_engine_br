@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Web\ApiTokenController;
 use App\Http\Controllers\Web\AuditLogController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\DashboardController;
@@ -40,12 +41,16 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('edit');
         Route::put('/', [ProfileController::class, 'update'])->name('update');
         Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password');
+
+        // Autoatendimento de API Token da extensão (sem terminal)
+        Route::get('/api-tokens', [ApiTokenController::class, 'show'])->name('tokens');
+        Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('tokens.store');
+        Route::delete('/api-tokens', [ApiTokenController::class, 'destroy'])->name('tokens.destroy');
     });
 
     // Administração de Usuários (somente Admin)
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
         Route::post('/users/{user}/reset-link', [UserController::class, 'sendResetLink'])->name('users.reset-link');

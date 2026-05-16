@@ -35,35 +35,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- Navbar -->
-    <nav class="bg-indigo-800 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-6">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
-                        <img src="{{ asset('img/govcert-mark.svg') }}" alt="GovCert" class="h-9 w-9">
-                        <span class="font-bold text-xl tracking-tight">GovCert</span>
-                    </a>
-                    <a href="{{ route('dashboard') }}" class="text-indigo-200 hover:text-white text-sm">Dashboard</a>
-                    <a href="{{ route('audit.index') }}" class="text-indigo-200 hover:text-white text-sm">Logs de Auditoria</a>
-                    @if(Auth::user()->isAdmin())
-                        <a href="{{ route('admin.users.index') }}" class="text-indigo-200 hover:text-white text-sm">Usuários</a>
-                        <a href="{{ route('admin.activity.index') }}" class="text-indigo-200 hover:text-white text-sm">Atividades</a>
-                    @endif
-                </div>
-                <div class="flex items-center gap-4 text-sm">
-                    <a href="{{ route('profile.edit') }}" class="text-indigo-200 hover:text-white">
-                        {{ Auth::user()->name }}
-                        <span class="text-indigo-400 text-xs">({{ Auth::user()->isAdmin() ? 'Admin' : 'Auditor' }})</span>
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded text-sm">Sair</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <x-navbar />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         @if(session('success'))

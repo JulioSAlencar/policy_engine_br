@@ -38,17 +38,17 @@ class DatabaseSeeder extends Seeder
         // Pool de identificadores: auditores + um admin (todos geram logs)
         $actors = $auditors->push($admin);
 
-        // ─── 160 logs de auditoria nos últimos 30 dias ────────────────────
-        foreach (range(1, 160) as $i) {
+        // ─── 150 logs realistas distribuídos nos últimos 60 dias ──────────
+        foreach (range(1, 150) as $i) {
             $actor = $actors->random();
 
-            AuditLog::factory()->historical()->create([
+            AuditLog::factory()->scenario()->create([
                 'user_id'         => $actor->id,
                 'user_identifier' => $actor->email,
             ]);
         }
 
-        $this->command->info('Seed concluído: 2 admins, 5 auditores e 160 logs de auditoria.');
+        $this->command->info('Seed concluído: 2 admins, 5 auditores e 150 logs realistas (60 dias).');
         $this->command->info('Login admin:   admin@govcert.gov.br / admin123');
         $this->command->info('Login auditor: auditor@govcert.gov.br / auditor123');
     }

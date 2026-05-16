@@ -10,7 +10,12 @@
       "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan route:list --columns=method,uri,name,middleware)",
       "Bash(docker compose *)",
       "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan route:list)",
-      "Bash(echo \"exit:$?\")"
+      "Bash(echo \"exit:$?\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app php artisan migrate --force)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan config:clear && php artisan view:clear && php artisan db:seed --force\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan route:clear && php artisan view:clear && php artisan test --filter UserManagementTest\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan view:clear && php artisan test\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan route:clear && php artisan view:clear && php artisan config:clear && php artisan test\")"
     ]
   }
 }
