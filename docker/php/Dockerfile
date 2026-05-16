@@ -21,7 +21,7 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 RUN pecl install redis && docker-php-ext-enable redis
 
 # Instala o Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=docker.io/library/composer:latest /usr/bin/composer /usr/bin/composer
 
 # Define o diretório de trabalho padrão
 WORKDIR /var/www
