@@ -18,6 +18,7 @@ class AuditLog extends Model
         'url_source',
         'captured_at',
         'status',
+        'error_reason',
         'has_sensitive_data',
         'risk_level',
         'leak_type',

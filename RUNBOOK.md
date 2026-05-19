@@ -79,9 +79,15 @@ docker compose exec app composer install       # Windows: -e COMPOSER_PROCESS_TI
 docker compose exec app cp -n .env.example .env
 docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --force
-docker compose exec app php artisan db:seed --force        # opcional: massa de teste
+docker compose exec app php artisan db:seed --force        # OBRIGATÓRIO: cria usuários admin/auditor e dados iniciais
 docker compose exec app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+docker compose exec app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 ```
+
+> ⚠️ **Permissões de storage são obrigatórias.** Sem elas, o Laravel não consegue
+> escrever em `laravel.log` nem em `bootstrap/cache` e lança um erro 500 com
+> `UnexpectedValueException: The stream or file [...] StreamHandler.php` na
+> primeira requisição. Execute os dois comandos acima logo após o `db:seed`.
 
 ### 2.3 Variáveis de ambiente (`src/.env`)
 
@@ -380,6 +386,100 @@ docker compose restart queue_worker
 
 ---
 
+### Cenário E — Login com admin falha ("credenciais incorretas")
+
+**Sintoma:** a tela de login retorna *"As credenciais fornecidas estão incorretas"*
+mesmo usando `admin@govcert.gov.br` / `admin123`. As migrations rodaram sem erro.
+
+**Causa raiz:** o `db:seed` nunca foi executado. As migrations criam apenas o
+**schema** (tabelas/colunas); os usuários (admin, auditor) são inseridos pelo
+`DatabaseSeeder`. Sem o seed, o banco fica vazio e qualquer login falha.
+
+**Diagnóstico — confirme que não há nenhum usuário:**
+
+```bash
+docker compose exec app php artisan tinker --execute="echo \App\Models\User::count().' usuário(s) cadastrado(s)';"
+# Saída esperada se o seed não rodou: "0 usuário(s) cadastrado(s)"
+```
+
+**Solução — rode o seed:**
+
+```bash
+docker compose exec app php artisan db:seed --force
+```
+
+Saída esperada:
+
+```
+Seed concluído: 2 admins, 5 auditores e 150 logs realistas (60 dias).
+Login admin:   admin@govcert.gov.br / admin123
+Login auditor: auditor@govcert.gov.br / auditor123
+```
+
+**Confirme que os usuários foram criados:**
+
+```bash
+docker compose exec app php artisan tinker --execute="echo \App\Models\User::count().' usuário(s) cadastrado(s)';"
+# Esperado: 7 usuário(s) cadastrado(s)
+```
+
+> **Observação:** rodar `db:seed` duas vezes gera e-mails duplicados (constraint
+> unique). Se o seed falhar por isso, rode `php artisan migrate:fresh --seed --force`
+> (recria todas as tabelas e aplica o seed do zero) — **atenção: apaga todos os dados**.
+
+**Por que isso acontece?** A `Subida inicial` na seção 2.2 lista o `db:seed` como
+passo **obrigatório**. Se ele foi pulado (considerado "opcional"), o schema existe
+mas não há dados de acesso. Sempre execute o seed logo após o `migrate`.
+
+---
+
+### Cenário F — Erro 500 imediato após subida (StreamHandler.php / permissão de escrita)
+
+**Sintoma:** qualquer requisição ao app retorna HTTP 500. O `docker compose logs app`
+(ou `docker compose logs webserver`) mostra uma exceção similar a:
+
+```
+UnexpectedValueException: The stream or file "/var/www/storage/logs/laravel.log"
+could not be opened in append mode: Failed to open stream: Permission denied
+(View: /var/www/storage/framework/views/...)
+in /var/www/vendor/monolog/monolog/src/Monolog/Handler/StreamHandler.php
+```
+
+**Causa raiz:** o volume `./src` é montado pelo Docker e os diretórios
+`storage/` e `bootstrap/cache/` pertencem ao usuário do host, não ao
+`www-data` (uid 33) que o PHP-FPM usa dentro do container. O Laravel não
+consegue abrir o arquivo de log nem gerar views compiladas.
+
+**Solução — execute os dois comandos (sempre juntos):**
+
+```bash
+docker compose exec app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+docker compose exec app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+```
+
+**Verificação:**
+
+```bash
+# Deve listar "www-data www-data" como dono/grupo
+docker compose exec app ls -la /var/www/storage/logs/
+
+# Uma requisição simples deve retornar 200
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8000
+```
+
+> **Quando ocorre?** Principalmente na primeira subida (`docker compose up`),
+> após clonar o repositório em Linux/macOS com outro usuário de host, ou após
+> `git checkout` que recrie arquivos com permissão do usuário host.
+> No **Windows com Docker Desktop + WSL2** o mapeamento de uid é transparente e
+> o problema raramente aparece, mas os comandos são seguros de rodar em qualquer OS.
+
+> **Por que dois comandos?** `chown` corrige o dono (www-data precisa ser dono
+> para criar subdiretórios); `chmod 775` garante que o grupo também possa
+> escrever, necessário quando outros processos no container (ex: artisan via
+> root) precisam acessar os mesmos arquivos.
+
+---
+
 ### Apêndice — "Access denied for user 'govcert_user'"
 
 **Sintoma:** `php artisan migrate` falha com
@@ -433,8 +533,7 @@ docker compose exec app php artisan migrate --seed --force
 - **Timeout no `composer install` (Windows):**
   `docker compose exec -e COMPOSER_PROCESS_TIMEOUT=2000 app composer install`;
   mantenha o projeto no filesystem do WSL2.
-- **Permissão em log/cache (Linux/macOS):**
-  `docker compose exec app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache`.
+- **Permissão em log/cache:** veja o **Cenário F** abaixo (erro 500 no StreamHandler.php).
 
 ---
 

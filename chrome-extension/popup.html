@@ -5,25 +5,58 @@
   <title>GovCert</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; width: 280px; background: #fff; color: #1f2937; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; width: 300px; background: #fff; color: #1f2937; }
+
+    /* ── Cabeçalho ── */
     .header { background: #071D41; color: #fff; padding: 14px 16px; border-bottom: 3px solid #FFCD07; display: flex; align-items: center; gap: 10px; }
     .header svg { width: 30px; height: 30px; flex-shrink: 0; }
     .header h1 { font-size: 14px; font-weight: 700; }
     .header p  { font-size: 10px; color: #adcdee; margin-top: 2px; }
-    .body { padding: 14px 16px; }
-    .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .dot.active   { background: #22c55e; }
-    .dot.inactive { background: #f59e0b; }
-    .status-text { font-size: 12px; color: #374151; }
-    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 10px 0; }
-    .btn { display: block; width: 100%; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; border: none; margin-bottom: 6px; transition: background .15s; }
+
+    /* ── Corpo ── */
+    .body { padding: 16px; }
+
+    /* ── Formulário de login ── */
+    .field { margin-bottom: 12px; }
+    label { display: block; font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    input[type="url"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 12px; color: #111; outline: none; transition: border-color .15s;
+    }
+    input:focus { border-color: #1351B4; box-shadow: 0 0 0 3px rgba(19,81,180,.12); }
+    .hint { font-size: 10px; color: #9ca3af; margin-top: 3px; }
+
+    /* ── Mensagem de erro ── */
+    .error-msg { font-size: 11px; color: #991b1b; background: #fee2e2; border-radius: 6px; padding: 7px 10px; margin-bottom: 12px; display: none; }
+    .error-msg.visible { display: block; }
+
+    /* ── Botões ── */
+    .btn { display: block; width: 100%; padding: 9px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; border: none; transition: background .15s; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
     .btn-primary   { background: #1351B4; color: #fff; }
-    .btn-primary:hover { background: #0C326F; }
-    .btn-secondary { background: #f3f4f6; color: #374151; }
+    .btn-primary:hover:not(:disabled)   { background: #0C326F; }
+    .btn-danger    { background: #dc2626; color: #fff; margin-top: 10px; }
+    .btn-danger:hover:not(:disabled)    { background: #b91c1c; }
+    .btn-secondary { background: #f3f4f6; color: #374151; margin-top: 6px; }
     .btn-secondary:hover { background: #e5e7eb; }
+
+    /* ── Card de status conectado ── */
+    .connected-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+    .connected-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .dot-green { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .status-label { font-size: 12px; font-weight: 700; color: #166534; }
+    .user-name { font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 8px; }
+    .divider { border: none; border-top: 1px solid #d1fae5; margin: 8px 0; }
+    .sync-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+    .sync-value { font-size: 12px; font-weight: 600; color: #374151; }
+
+    /* ── Rodapé ── */
     .footer { padding: 8px 16px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #f3f4f6; }
-    #user-id { font-size: 11px; color: #6b7280; margin-bottom: 10px; }
+
+    /* ── Views alternáveis ── */
+    #view-login, #view-connected { display: none; }
   </style>
 </head>
 <body>
@@ -39,21 +72,47 @@
     </div>
   </div>
 
-  <div class="body">
-    <div class="status-row">
-      <div class="dot" id="status-dot"></div>
-      <span class="status-text" id="status-text">Verificando...</span>
+  <!-- ── View 1: Deslogado ── -->
+  <div id="view-login" class="body">
+    <div class="field">
+      <label for="api-url">URL da Plataforma</label>
+      <input type="url" id="api-url" placeholder="http://localhost:8000">
+      <div class="hint">Endereço do servidor GovCert (sem barra final).</div>
     </div>
 
-    <div id="user-id"></div>
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" placeholder="voce@govcert.gov.br" autocomplete="username">
+    </div>
 
-    <hr class="divider">
+    <div class="field">
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
 
-    <button class="btn btn-primary" id="btn-dashboard">Abrir Dashboard</button>
-    <button class="btn btn-secondary" id="btn-options">Configurações</button>
+    <div class="error-msg" id="login-error"></div>
+
+    <button class="btn btn-primary" id="connect-btn" type="button">Conectar</button>
   </div>
 
-  <div class="footer">v1.0.0 — GovCert</div>
+  <!-- ── View 2: Logado ── -->
+  <div id="view-connected" class="body">
+    <div class="connected-card">
+      <div class="connected-header">
+        <div class="dot-green"></div>
+        <span class="status-label">Status: Conectado</span>
+      </div>
+      <div class="user-name" id="user-name-display"></div>
+      <hr class="divider">
+      <div class="sync-label">Último envio</div>
+      <div class="sync-value" id="last-sync-display">Nenhum envio recente</div>
+    </div>
+
+    <button class="btn btn-secondary" id="btn-dashboard" type="button">Abrir Dashboard</button>
+    <button class="btn btn-danger" id="disconnect-btn" type="button">Desconectar</button>
+  </div>
+
+  <div class="footer">v2.0.0 — GovCert</div>
 
   <script src="popup.js"></script>
 </body>

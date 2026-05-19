@@ -69,51 +69,38 @@ A extensão fica em **`./chrome-extension/`** (Manifest V3).
 6. Sempre que arquivos da extensão forem alterados, clique em **Recarregar (↻)**
    no card da extensão em `chrome://extensions`.
 
-### 2.2 Obtendo o seu API Token
+### 2.2 Conectando a extensão ao servidor (Login)
 
-> ⚠️ **Aviso de segurança:** **nunca** digite a sua senha corporativa em comandos
-> de terminal (`curl`, scripts etc.) para obter um token. Senhas não devem
-> transitar por linha de comando, histórico de shell ou logs.
+Não há mais necessidade de gerar tokens manualmente ou acessar telas de opções.
+O login é feito **diretamente no popup** da extensão:
 
-Há **duas formas suportadas** de obter o token, ambas sem expor a sua senha:
-
-**Opção A — Solicitar ao Administrador (disponível hoje):**
-
-O Administrador da plataforma gera um token nominal para você executando, no
-servidor, o comando abaixo (apenas o admin tem acesso ao terminal do servidor):
-
-```bash
-docker compose exec app php artisan tinker --execute="echo \App\Models\User::where('email','voce@govcert.gov.br')->first()->createToken('extensao-chrome')->plainTextToken;"
-```
-
-O comando imprime o token no formato `id|hash`. O Administrador o entrega a você
-por um **canal seguro** (gerenciador de segredos / mensagem interna protegida).
-Por segurança, o hash **não** é exibido novamente — guarde-o com cuidado.
-
-**Opção B — Geração pelo Painel Web (em implantação):**
-
-A funcionalidade de **auto-geração de token na tela do próprio painel web**
-(*Perfil → Tokens de Acesso*) será utilizada para autoatendimento, eliminando a
-necessidade de acionar o Administrador. Até a sua liberação, use a Opção A.
-
-> O token **não expira por padrão**. Se ele for revogado, ou se a sua conta for
-> desativada, será necessário solicitar/gerar um novo.
-
-### 2.3 Configurando a extensão (tela de Opções)
-
-1. Abra a tela de **Opções** por **um** dos caminhos:
-   - Clique no ícone da extensão → botão **Configurações**; ou
-   - `chrome://extensions` → **GovCert** → **Detalhes** → **Opções da extensão**; ou
-   - Botão direito no ícone da extensão → **Opções**.
+1. Clique no ícone **GovCert** na barra do Chrome — o popup de login abrirá.
 2. Preencha os três campos:
-   - **URL da API:** endereço da plataforma (ex.: `http://localhost:8000` em
-     desenvolvimento, ou a URL **HTTPS** de produção). *Não inclua barra final.*
-   - **API Token:** cole o valor completo obtido em 2.2 (incluindo o `id|`).
-   - **Identificador do usuário:** sua matrícula ou e-mail — rótulo que aparecerá
-     nos logs de auditoria como autor da interação.
-3. Clique em **Salvar Configurações** (confirmação verde = sucesso).
-4. Clique no ícone da extensão: o status deve indicar **"Monitoramento ativo"**.
-   Se aparecer *"Token não configurado"*, revise o passo 2.
+   - **URL da Plataforma:** endereço do servidor GovCert.
+     - Desenvolvimento: `http://localhost:8000`
+     - Produção: a URL **HTTPS** fornecida pelo administrador (ex.: `https://govcert.seugov.gov.br`)
+   - **E-mail:** seu e-mail corporativo cadastrado na plataforma.
+   - **Senha:** sua senha de acesso ao painel GovCert.
+3. Clique em **Conectar**.
+
+Em caso de sucesso, o popup exibirá um **card verde** com:
+- "Status: Conectado"
+- Seu nome de usuário
+- O horário do último log enviado (ou *"Nenhum envio recente"* se for a primeira vez)
+
+> Se a mensagem *"As credenciais fornecidas estão incorretas"* aparecer, confirme
+> com o Administrador que sua conta existe e está ativa na plataforma.
+> Se aparecer *"Conta desativada"*, acione o Administrador para reativar o acesso.
+
+### 2.3 Desconectando
+
+No popup (card verde), clique no botão vermelho **Desconectar**. A extensão
+revoga o token no servidor e limpa todas as credenciais locais. O formulário de
+login é exibido novamente.
+
+> O token gerado no login **não expira por prazo**. Ele é revogado automaticamente
+> quando você clicar em Desconectar ou quando o Administrador desativar sua conta.
+> Um novo login gera um token novo e invalida o anterior para o mesmo dispositivo.
 
 ### 2.4 Como a extensão opera no dia a dia
 

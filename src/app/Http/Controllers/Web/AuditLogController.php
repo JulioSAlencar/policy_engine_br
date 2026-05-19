@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\AuditLog;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -13,39 +14,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
-        $query = AuditLog::query()->latest();
+        $logs = $this->buildFilteredQuery($request)->paginate(25)->withQueryString();
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        // Requisição AJAX (botão "Atualizar") — retorna o partial HTML da tabela
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('audit._table', compact('logs'))->render(),
+            ]);
         }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        if ($request->filled('user_identifier')) {
-            $query->where('user_identifier', 'like', '%' . $request->user_identifier . '%');
-        }
-
-        if ($request->filled('risk_level')) {
-            $query->where('risk_level', $request->risk_level);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $logs = $query->paginate(25)->withQueryString();
 
         return view('audit.index', compact('logs'));
     }
 
     public function exportCsv(Request $request): StreamedResponse
     {
-        $query = $this->buildFilteredQuery($request);
-
+        $query    = $this->buildFilteredQuery($request);
         $filename = 'audit_logs_' . now()->format('Y-m-d_His') . '.csv';
 
         ActivityLog::record(
@@ -60,7 +45,8 @@ class AuditLogController extends Controller
 
             fputcsv($handle, [
                 'ID', 'Usuário', 'URL Origem', 'Dados Sensíveis',
-                'Nível de Risco', 'Justificativa', 'Status', 'Capturado em', 'Processado em',
+                'Nível de Risco', 'Tipo de Vazamento', 'Status', 'Motivo de Falha',
+                'Justificativa', 'Capturado em', 'Processado em',
             ]);
 
             $query->chunk(200, function ($logs) use ($handle) {
@@ -71,8 +57,10 @@ class AuditLogController extends Controller
                         $log->url_source,
                         $log->has_sensitive_data ? 'Sim' : 'Não',
                         $log->risk_level ?? 'N/A',
-                        $log->gemini_justification ?? '',
+                        $log->leak_type ?? 'N/A',
                         $log->status,
+                        $log->error_reason ?? '',
+                        $log->gemini_justification ?? '',
                         $log->captured_at?->format('d/m/Y H:i:s'),
                         $log->processed_at?->format('d/m/Y H:i:s'),
                     ]);
