@@ -55,8 +55,7 @@ services:
       PMA_PORT: 3306
       UPLOAD_LIMIT: 64M
     ports:
-      # Exposto apenas no localhost por segurança
-      - "127.0.0.1:8080:80"
+      - "8080:80"
     networks:
       - laravel-network
     depends_on:

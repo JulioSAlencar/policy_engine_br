@@ -15,7 +15,8 @@
       "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan config:clear && php artisan view:clear && php artisan db:seed --force\")",
       "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan route:clear && php artisan view:clear && php artisan test --filter UserManagementTest\")",
       "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan view:clear && php artisan test\")",
-      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan route:clear && php artisan view:clear && php artisan config:clear && php artisan test\")"
+      "Bash(MSYS_NO_PATHCONV=1 docker exec app sh -c \"php artisan route:clear && php artisan view:clear && php artisan config:clear && php artisan test\")",
+      "Bash(sudo docker compose --profile dev up -d phpmyadmin)"
     ]
   }
 }
